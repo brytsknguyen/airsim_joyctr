@@ -1,9 +1,11 @@
 <launch>
 
-    <arg name="airsim_imu_hz" default="1" />
-    <arg name="airsim_gndtruth_hz" default="200" />
-    <arg name="airsim_img_hz" default="5" />
-    <arg name="airsim_lidar_hz" default="5" />
+    <arg name="airsim_imu_hz"      default="1"/>
+    <arg name="airsim_gndtruth_hz" default="200"/>
+    <arg name="airsim_img_hz"      default="5"/>
+    <arg name="airsim_lidar_hz"    default="5"/>
+
+    <arg name="bag_record_delay"   default="5"/>
 
     <arg name="mode" default="record" />  <!-- choose "record" or "play" or "check"-->
 
@@ -36,7 +38,7 @@
     <group if="$(eval mode == 'record')">
         <!-- rosbag recorder -->
         <node required="true" pkg="rosbag" type="record" name="rosbag_record"
-              args="-o /media/$(env USER)/mySamsungSSD/AirSim_29032021/nbh.bag
+              args="-o /media/$(env USER)/myHPSSD/AirSim/nbh.bag
                     /airsim_node/drone_0/imu/Imu
                     /airsim_node/drone_0/drone_state
                     /airsim_node/drone_0/left/Scene

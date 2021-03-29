@@ -76,6 +76,8 @@ struct TeleopAirSim
     sensor_msgs::Joy joystat;
     bool joystat_received = false;
 
+    ros::Subscriber odom_sub;
+
     double scale = 2;
 
     // Constructor
