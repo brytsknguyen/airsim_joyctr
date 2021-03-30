@@ -2,40 +2,52 @@
 
     <arg name="airsim_imu_hz"      default="1"/>
     <arg name="airsim_gndtruth_hz" default="200"/>
-    <arg name="airsim_img_hz"      default="5"/>
-    <arg name="airsim_lidar_hz"    default="5"/>
+    <arg name="airsim_img_hz"      default="3.333"/>
+    <arg name="airsim_lidar_hz"    default="3.333"/>
+    <arg name="publish_clock"      default="--clock"/>
 
     <arg name="bag_record_delay"   default="5"/>
 
-    <arg name="mode" default="record" />  <!-- choose "record" or "play" or "check"-->
+    <arg name="mode" default="play" />  <!-- choose "record" or "play" or "check"-->
 
-    <!-- Launch the airsim node -->
-    <arg name="host" default="localhost" />
-    <arg name="airsim_output_mode" default="log" />
-    <node required="true" name="airsim_node" pkg="airsim_ros_pkgs" type="airsim_node" output="$(arg airsim_output_mode)">
-        <!-- ROS timer rates. Note that timer callback will be processed at maximum possible rate, upperbounded by the following ROS params -->
-        <param name="is_vulkan" type="bool" value="false" /> 
-        <param name="update_airsim_img_response_every_n_sec" type="double" value="$(eval 1.0/airsim_img_hz)" /> 
-        <param name="update_lidar_every_n_sec" type="double" value="$(eval 1.0/airsim_lidar_hz)" />
-        <param name="update_imu_n_sec" type="double" value="$(eval 1.0/airsim_imu_hz)" />
-        <param name="update_airsim_control_every_n_sec" type="double" value="$(eval 1.0/airsim_gndtruth_hz)" />
-        <param name="host_ip" type="string" value="$(arg host)" />
-    </node>
-
+    <arg name="bag_file" default="/media/tmn/myHPSSD/AirSim/nbh_01.bag" /> 
 
     <!-- Launch the joystick driver-->
     <node name="joy" pkg="joy" type="joy_node" output="log"
           args="/dev/input/by-id/usb-Microsoft_Controller_3039373130393831323733303532-event-joystick" />
 
-
     <!-- Launch the joyctr node -->
     <node name="airsim_joyctr" pkg="airsim_joyctr" type="airsim_joyctr_node" output="screen">
         <param name="scale"    type="int" value="3" />
     </node>
-
+    
+    <!-- Launch the visualization -->
+    <node name="rviz_visualisation" pkg="rviz" type="rviz" output="log"
+          args="-d $(find airsim_joyctr)/launch/airsim.rviz" />
+    <!-- Subscribe to the tf and publish the trajectory of the drone -->
+    <node name="odom2path" pkg="hector_trajectory_server" type="hector_trajectory_server" output="screen">
+        <param name="target_frame_name" type="string" value="world_airsim" />
+        <param name="source_frame_name" type="string" value="drone_0_body" />
+        <param name="trajectory_update_rate" type="double" value="20" />
+        <param name="trajectory_publish_rate" type="double" value="20" />
+    </node>
 
     <!-- Record the bag -->
     <group if="$(eval mode == 'record')">
+    
+        <!-- Launch the airsim node -->
+        <arg name="host" default="localhost" />
+        <arg name="airsim_output_mode" default="screen" />
+        <node required="true" name="airsim_node" pkg="airsim_ros_pkgs" type="airsim_node" output="$(arg airsim_output_mode)">
+            <!-- ROS timer rates. Note that timer callback will be processed at maximum possible rate, upperbounded by the following ROS params -->
+            <param name="is_vulkan" type="bool" value="false" /> 
+            <param name="update_airsim_img_response_every_n_sec" type="double" value="$(eval 1.0/airsim_img_hz)" /> 
+            <param name="update_lidar_every_n_sec" type="double" value="$(eval 1.0/airsim_lidar_hz)" />
+            <param name="update_imu_n_sec" type="double" value="$(eval 1.0/airsim_imu_hz)" />
+            <param name="update_airsim_control_every_n_sec" type="double" value="$(eval 1.0/airsim_gndtruth_hz)" />
+            <param name="host_ip" type="string" value="$(arg host)" />
+        </node>
+
         <!-- rosbag recorder -->
         <node required="true" pkg="rosbag" type="record" name="rosbag_record"
               args="-o /media/$(env USER)/myHPSSD/AirSim/nbh.bag
@@ -50,9 +62,9 @@
               launch-prefix="bash -c 'sleep $(arg bag_record_delay); $0 $@' " />
     </group>
 
-    
-    <!-- Launch the visualization -->
-    <node name="rviz_visualisation" pkg="rviz" type="rviz" output="log"
-          args="-d $(find airsim_joyctr)/launch/airsim.rviz" />
+    <group if="$(eval mode == 'play')">
+        <node pkg="rosbag" type="play" name="rosbag_play"
+              args="$(arg publish_clock) $(arg bag_file)"/>
+    </group>
 
 </launch>

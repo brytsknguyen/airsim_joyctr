@@ -94,8 +94,10 @@ struct TeleopAirSim
         // Get param for the scale factor
         nh.param("scale", scale, 2.0);
 
+        // Suscribe to the airsim
         vel_cmd_pub = nh.advertise<airsim_ros_pkgs::VelCmd>("/airsim_node/drone_0/vel_cmd_body_frame", 1);
         takeoff_srv_client = nh.serviceClient<airsim_ros_pkgs::Takeoff>("/airsim_node/drone_0/takeoff");
+        
     }
 
     void CtrTimerCb(const ros::TimerEvent &event)
